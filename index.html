@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>105 Tennis Scoreboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --green: #2ecc71;
+      --green-dark: #1a7a43;
+      --yellow: #f9ca24;
+      --red: #e74c3c;
+      --bg: #0d1b12;
+      --surface: #152b1c;
+      --surface2: #1e3d28;
+      --text: #f0f4f0;
+      --muted: #7ab88a;
+      --shadow: rgba(0,0,0,0.5);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 12px 32px;
+      background-image:
+        radial-gradient(ellipse at 20% 10%, rgba(46,204,113,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 90%, rgba(249,202,36,0.05) 0%, transparent 60%);
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.4rem, 8vw, 3.6rem);
+      letter-spacing: 6px;
+      color: var(--green);
+      text-shadow: 0 0 24px rgba(46,204,113,0.4);
+      line-height: 1;
+    }
+
+    header p {
+      font-size: 0.78rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* ── SCOREBOARD ── */
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0;
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 8px 40px var(--shadow);
+      margin-bottom: 24px;
+      border: 1px solid rgba(46,204,113,0.15);
+    }
+
+    .team-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 12px 24px;
+      gap: 6px;
+      position: relative;
+      transition: background 0.3s;
+    }
+
+    .team-panel.winner-glow {
+      background: rgba(46,204,113,0.08);
+    }
+
+    .team-label {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .team-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(1.1rem, 4vw, 1.5rem);
+      letter-spacing: 2px;
+      color: var(--text);
+      text-align: center;
+      cursor: pointer;
+      border-bottom: 1px dashed rgba(255,255,255,0.15);
+      padding-bottom: 2px;
+    }
+
+    .team-name:hover { color: var(--green); }
+
+    .score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(4rem, 16vw, 6.5rem);
+      line-height: 1;
+      color: var(--text);
+      transition: transform 0.15s, color 0.3s;
+      min-width: 3ch;
+      text-align: center;
+    }
+
+    .score.bump {
+      transform: scale(1.18);
+      color: var(--green);
+    }
+
+    .score.winner {
+      color: var(--yellow);
+      text-shadow: 0 0 20px rgba(249,202,36,0.6);
+    }
+
+    .progress-wrap {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-dark), var(--green));
+      border-radius: 99px;
+      transition: width 0.4s cubic-bezier(.4,1.4,.6,1);
+    }
+
+    /* divider */
+    .divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 8px;
+      gap: 8px;
+      background: var(--surface2);
+      min-width: 48px;
+    }
+
+    .vs-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    .target-badge {
+      background: rgba(46,204,113,0.15);
+      border: 1px solid rgba(46,204,113,0.3);
+      border-radius: 8px;
+      padding: 4px 8px;
+      font-size: 0.65rem;
+      color: var(--green);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* ── BUTTONS GRID ── */
+    .teams-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 640px;
+      margin-bottom: 20px;
+    }
+
+    .team-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .ctrl-label {
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 6px;
+      transition: transform 0.1s, filter 0.1s;
+      line-height: 1.2;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active { transform: scale(0.93); filter: brightness(0.85); }
+
+    .btn .pts {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+    }
+
+    .btn .lbl {
+      font-size: 0.58rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+
+    /* point types */
+    .btn-1  { background: #2d6a4f; color: #fff; }
+    .btn-10 { background: #1a6985; color: #fff; }
+    .btn-15 { background: #6d4c9e; color: #fff; }
+    .btn-20 { background: #8b2e0e; color: #fff; }
+
+    /* ── UTILITY BUTTONS ── */
+    .util-row {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .btn-util {
+      flex: 1;
+      border: none;
+      border-radius: 10px;
+      padding: 13px 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.1s, filter 0.1s;
+      letter-spacing: 0.5px;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn-util:active { transform: scale(0.95); filter: brightness(0.85); }
+    .btn-util:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    .btn-undo  { background: var(--surface2); color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-reset { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
+
+    /* ── LEGEND ── */
+    .legend {
+      margin-top: 24px;
+      width: 100%;
+      max-width: 640px;
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      border: 1px solid rgba(46,204,113,0.1);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .legend-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* ── WIN MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 40px 32px;
+      text-align: center;
+      max-width: 340px;
+      width: 100%;
+      border: 1px solid rgba(249,202,36,0.4);
+      box-shadow: 0 0 60px rgba(249,202,36,0.15);
+      transform: scale(0.85);
+      transition: transform 0.3s cubic-bezier(.4,1.4,.6,1);
+    }
+
+    .modal-overlay.show .modal { transform: scale(1); }
+
+    .trophy { font-size: 3.5rem; margin-bottom: 12px; }
+
+    .modal h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.4rem;
+      letter-spacing: 4px;
+      color: var(--yellow);
+      margin-bottom: 6px;
+    }
+
+    .modal p { color: var(--muted); font-size: 0.9rem; margin-bottom: 24px; }
+
+    .btn-play-again {
+      background: var(--green);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 32px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: filter 0.2s;
+    }
+
+    .btn-play-again:hover { filter: brightness(1.1); }
+
+    @media (max-width: 400px) {
+      .btn .lbl { font-size: 0.52rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>105</h1>
+  <p>Tennis Scoring Drill</p>
+</header>
+
+<!-- SCOREBOARD -->
+<div class="scoreboard">
+  <!-- TEAM A -->
+  <div class="team-panel" id="panelA">
+    <span class="team-label">Team</span>
+    <span class="team-name" id="nameA" title="Tap to rename">Team A</span>
+    <div class="score" id="scoreA">0</div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="barA" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- DIVIDER -->
+  <div class="divider">
+    <span class="vs-text">VS</span>
+    <div class="target-badge">Goal<br>105</div>
+  </div>
+
+  <!-- TEAM B -->
+  <div class="team-panel" id="panelB">
+    <span class="team-label">Team</span>
+    <span class="team-name" id="nameB" title="Tap to rename">Team B</span>
+    <div class="score" id="scoreB">0</div>
+    <div class="progress-wrap">
+      <div class="progress-bar" id="barB" style="width:0%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- POINT BUTTONS -->
+<div class="teams-controls">
+  <!-- Team A buttons -->
+  <div class="team-controls">
+    <div class="ctrl-label" id="ctrlLabelA">Team A</div>
+    <div class="btn-grid">
+      <button class="btn btn-1"  onclick="addPoints('A',1)">  <span class="pts">+1</span><span class="lbl">Regular</span></button>
+      <button class="btn btn-10" onclick="addPoints('A',10)"> <span class="pts">+10</span><span class="lbl">Baseline</span></button>
+      <button class="btn btn-15" onclick="addPoints('A',15)"> <span class="pts">+15</span><span class="lbl">Volley</span></button>
+      <button class="btn btn-20" onclick="addPoints('A',20)"> <span class="pts">+20</span><span class="lbl">Overhead</span></button>
+    </div>
+  </div>
+
+  <!-- Team B buttons -->
+  <div class="team-controls">
+    <div class="ctrl-label" id="ctrlLabelB">Team B</div>
+    <div class="btn-grid">
+      <button class="btn btn-1"  onclick="addPoints('B',1)">  <span class="pts">+1</span><span class="lbl">Regular</span></button>
+      <button class="btn btn-10" onclick="addPoints('B',10)"> <span class="pts">+10</span><span class="lbl">Baseline</span></button>
+      <button class="btn btn-15" onclick="addPoints('B',15)"> <span class="pts">+15</span><span class="lbl">Volley</span></button>
+      <button class="btn btn-20" onclick="addPoints('B',20)"> <span class="pts">+20</span><span class="lbl">Overhead</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- UTILITY BUTTONS -->
+<div class="util-row">
+  <button class="btn-util btn-undo" id="btnUndo" onclick="undo()" disabled>
+    ↩ Undo
+  </button>
+  <button class="btn-util btn-reset" onclick="confirmReset()">
+    ✕ Reset
+  </button>
+</div>
+
+<!-- WIN MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="trophy">🏆</div>
+    <h2 id="modalTitle">Team A Wins!</h2>
+    <p id="modalSub">Reached 105 points first.</p>
+    <button class="btn-play-again" onclick="resetGame()">Play Again</button>
+  </div>
+</div>
+
+<script>
+  const TARGET = 105;
+  let scores = { A: 0, B: 0 };
+  let history = []; // stack of {team, pts}
+  let gameOver = false;
+
+  function addPoints(team, pts) {
+    if (gameOver) return;
+    history.push({ team, pts });
+    scores[team] = Math.min(scores[team] + pts, 999);
+    update();
+    bumpAnim(team);
+    document.getElementById('btnUndo').disabled = false;
+    if (scores[team] >= TARGET) showWinner(team);
+  }
+
+  function undo() {
+    if (!history.length) return;
+    const last = history.pop();
+    scores[last.team] = Math.max(0, scores[last.team] - last.pts);
+    gameOver = false;
+    hideModal();
+    update();
+    document.getElementById('btnUndo').disabled = history.length === 0;
+  }
+
+  function update() {
+    ['A','B'].forEach(t => {
+      const el = document.getElementById('score' + t);
+      el.textContent = scores[t];
+      el.className = 'score' + (scores[t] >= TARGET ? ' winner' : '');
+      const pct = Math.min(scores[t] / TARGET * 100, 100);
+      document.getElementById('bar' + t).style.width = pct + '%';
+      document.getElementById('panel' + t).classList.toggle('winner-glow', scores[t] >= TARGET);
+    });
+  }
+
+  function bumpAnim(team) {
+    const el = document.getElementById('score' + team);
+    el.classList.add('bump');
+    setTimeout(() => el.classList.remove('bump'), 200);
+  }
+
+  function showWinner(team) {
+    gameOver = true;
+    const name = document.getElementById('name' + team).textContent;
+    document.getElementById('modalTitle').textContent = name + ' Wins! 🎾';
+    document.getElementById('modalSub').textContent =
+      name + ' reached ' + TARGET + ' points!';
+    document.getElementById('modal').classList.add('show');
+  }
+
+  function hideModal() {
+    document.getElementById('modal').classList.remove('show');
+  }
+
+  function resetGame() {
+    scores = { A: 0, B: 0 };
+    history = [];
+    gameOver = false;
+    update();
+    hideModal();
+    document.getElementById('btnUndo').disabled = true;
+  }
+
+  function confirmReset() {
+    if (scores.A === 0 && scores.B === 0) return;
+    if (confirm('Reset the scoreboard?')) resetGame();
+  }
+
+  // Tap team name to rename
+  ['A','B'].forEach(t => {
+    document.getElementById('name' + t).addEventListener('click', () => {
+      const current = document.getElementById('name' + t).textContent;
+      const newName = prompt('Enter team name:', current);
+      if (newName && newName.trim()) {
+        const n = newName.trim();
+        document.getElementById('name' + t).textContent = n;
+        document.getElementById('ctrlLabel' + t).textContent = n;
+      }
+    });
+  });
+</script>
+</body>
+</html>
