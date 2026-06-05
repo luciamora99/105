@@ -274,7 +274,19 @@
     .btn-util:disabled { opacity: 0.35; cursor: not-allowed; }
 
     .btn-undo  { background: var(--surface2); color: var(--text); border: 1px solid rgba(255,255,255,0.1); }
+    .btn-swap  { background: rgba(249,202,36,0.12); color: var(--yellow); border: 1px solid rgba(249,202,36,0.3); }
     .btn-reset { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
+
+    /* swap animation */
+    .scoreboard.swapping .team-panel {
+      animation: swapFlash 0.4s ease;
+    }
+    @keyframes swapFlash {
+      0%   { opacity: 1; transform: translateX(0); }
+      30%  { opacity: 0; transform: translateX(20px); }
+      60%  { opacity: 0; transform: translateX(-20px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
 
     /* ── LEGEND ── */
     .legend {
@@ -390,7 +402,6 @@
 <div class="scoreboard">
   <!-- TEAM A -->
   <div class="team-panel" id="panelA">
-    <span class="team-label">Team</span>
     <span class="team-name" id="nameA" title="Tap to rename">Team A</span>
     <div class="score" id="scoreA">0</div>
     <div class="progress-wrap">
@@ -405,7 +416,6 @@
 
   <!-- TEAM B -->
   <div class="team-panel" id="panelB">
-    <span class="team-label">Team</span>
     <span class="team-name" id="nameB" title="Tap to rename">Team B</span>
     <div class="score" id="scoreB">0</div>
     <div class="progress-wrap">
@@ -444,6 +454,9 @@
   <button class="btn-util btn-undo" id="btnUndo" onclick="undo()" disabled>
     ↩ Undo
   </button>
+  <button class="btn-util btn-swap" onclick="swapSides()">
+    ⇄ Swap
+  </button>
   <button class="btn-util btn-reset" onclick="confirmReset()">
     ✕ Reset
   </button>
@@ -475,14 +488,50 @@
     if (scores[team] >= TARGET) showWinner(team);
   }
 
+  function swapSides() {
+    // Swap scores
+    [scores.A, scores.B] = [scores.B, scores.A];
+
+    // Swap names (display + ctrl label)
+    const nameA = document.getElementById('nameA').textContent;
+    const nameB = document.getElementById('nameB').textContent;
+    document.getElementById('nameA').textContent = nameB;
+    document.getElementById('nameB').textContent = nameA;
+    document.getElementById('ctrlLabelA').textContent = nameB;
+    document.getElementById('ctrlLabelB').textContent = nameA;
+
+    // Visual flash
+    const sb = document.querySelector('.scoreboard');
+    sb.classList.add('swapping');
+    setTimeout(() => sb.classList.remove('swapping'), 420);
+
+    // Also record swap in history so undo can reverse it
+    history.push({ type: 'swap' });
+    document.getElementById('btnUndo').disabled = false;
+
+    update();
+  }
+
+
   function undo() {
     if (!history.length) return;
     const last = history.pop();
-    scores[last.team] = Math.max(0, scores[last.team] - last.pts);
+    if (last.type === 'swap') {
+      [scores.A, scores.B] = [scores.B, scores.A];
+      const nameA = document.getElementById('nameA').textContent;
+      const nameB = document.getElementById('nameB').textContent;
+      document.getElementById('nameA').textContent = nameB;
+      document.getElementById('nameB').textContent = nameA;
+      document.getElementById('ctrlLabelA').textContent = nameB;
+      document.getElementById('ctrlLabelB').textContent = nameA;
+    } else {
+      scores[last.team] = Math.max(0, scores[last.team] - last.pts);
+    }
     gameOver = false;
     hideModal();
     update();
     document.getElementById('btnUndo').disabled = history.length === 0;
+  }
   }
 
   function update() {
